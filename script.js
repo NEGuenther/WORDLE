@@ -1,58 +1,74 @@
-const targetWord = "piano";
-let currentGuess = [];
-let row = 0;
-let gameWon = false;
-
-document.addEventListener("DOMContentLoaded", () => {
-    const grid = document.getElementById("grid");
-    for (let i = 0; i < 30; i++) { // 6 linhas de 5 colunas
-        const cell = document.createElement("div");
-        grid.appendChild(cell);
+    const targetWord = "CASAS"; // Palavra fixa para adivinhar
+    let guesses = [];
+    const maxAttempts = 5;
+    
+    function createBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      for (let i = 0; i < maxAttempts * 5; i++) {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        board.appendChild(tile);
+      }
     }
-});
 
-function typeLetter(letter) {
-    if (currentGuess.length < 5 && !gameWon) {
-        currentGuess.push(letter);
-        updateGrid();
-    }
-}
-
-function deleteLetter() {
-    if (currentGuess.length > 0 && !gameWon) {
-        currentGuess.pop();
-        updateGrid();
-    }
-}
-
-function submitGuess() {
-    if (currentGuess.length !== 5 || gameWon) return;
-
-    const guess = currentGuess.join("").toLowerCase();
-    const rowCells = Array.from(document.querySelectorAll(".grid div")).slice(row * 5, row * 5 + 5);
-
-    currentGuess.forEach((letter, index) => {
-        const cell = rowCells[index];
-        if (letter === targetWord[index]) {
-            cell.classList.add("correct-position");
-        } else if (targetWord.includes(letter)) {
-            cell.classList.add("wrong-position");
+    function updateBoard() {
+      const tiles = document.querySelectorAll('.tile');
+      tiles.forEach((tile, i) => {
+        const row = Math.floor(i / 5);
+        const col = i % 5;
+        const guess = guesses[row];
+        tile.textContent = '';
+        tile.className = 'tile';
+        if (guess) {
+          tile.textContent = guess[col] || '';
+          if (guess[col]) {
+            const status = getTileStatus(guess[col], col);
+            tile.classList.add(status);
+          }
         }
-        cell.textContent = letter;
-    });
-
-    if (guess === targetWord) {
-        alert("Parabéns! Você acertou a palavra!");
-        gameWon = true;
+      });
     }
 
-    currentGuess = [];
-    row++;
-}
+    function getTileStatus(letter, index) {
+      if (targetWord[index] === letter) return 'correct';
+      if (targetWord.includes(letter)) return 'present';
+      return 'absent';
+    }
 
-function updateGrid() {
-    const rowCells = Array.from(document.querySelectorAll(".grid div")).slice(row * 5, row * 5 + 5);
-    rowCells.forEach((cell, index) => {
-        cell.textContent = currentGuess[index] || "";
-    });
-}
+    function makeGuess() {
+      const input = document.getElementById('guessInput');
+      const guess = input.value.toUpperCase();
+
+      if (guess.length !== 5) {
+        showMessage("A palavra deve ter 5 letras!");
+        return;
+      }
+      if (guesses.length >= maxAttempts) {
+        showMessage("Você atingiu o número máximo de tentativas!");
+        return;
+      }
+
+      guesses.push(guess);
+      updateBoard();
+      input.value = '';
+
+      if (guess === targetWord) {
+        showMessage("Parabéns, você acertou!");
+      } else if (guesses.length === maxAttempts) {
+        showMessage(`Você perdeu! A palavra era: ${targetWord}`);
+      }
+    }
+
+    function showMessage(message) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+    }
+
+    function resetGame() {
+      guesses = [];
+      createBoard();
+      showMessage('');
+    }
+
+    createBoard();
